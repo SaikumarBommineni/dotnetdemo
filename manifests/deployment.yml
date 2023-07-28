@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: saikumarbomminenidotnetdemo 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: saikumarbomminenidotnetdemo
+  template:
+    metadata:
+      labels:
+        app: saikumarbomminenidotnetdemo 
+    spec:
+      containers:
+        - name: saikumarbomminenidotnetdemo 
+          image: cortlandcontainer.azurecr.io/saikumarbomminenidotnetdemo
+          ports:
+          - containerPort: 8080
