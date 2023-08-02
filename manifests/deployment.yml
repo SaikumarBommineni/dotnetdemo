@@ -16,4 +16,4 @@ spec:
         - name: saikumarbomminenidotnetdemo 
           image: cortlandcontainer.azurecr.io/saikumarbomminenidotnetdemo
           ports:
-          - containerPort: 8080
+          - containerPort: 5000
