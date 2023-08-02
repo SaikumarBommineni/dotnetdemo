@@ -52,7 +52,7 @@ stages:
   - deployment: Deploy
     displayName: Deploy
     pool:
-      vmImage: $(vmImageName)
+      name: $(vmImageName)
     environment: 'SaikumarBomminenidotnetdemo-1933.saikumar'
     strategy:
       runOnce:
