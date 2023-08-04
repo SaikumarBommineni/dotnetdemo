@@ -68,10 +68,11 @@ stages:
     azureResourceGroup: 'admin'
     kubernetesCluster: 'admin'
     namespace: 'saikumar'
-    command: 'ls'
+    command: 'upgrade'
     chartType: 'Name'
     chartName: 'heml.reo'
     chartVersion: '1.16.0'
     valueFile: 'values.yaml'
-    waitForExecution: false
+    resetValues: true
+    force: true
            
