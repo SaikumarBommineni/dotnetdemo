@@ -22,6 +22,20 @@ stages:
         chartVersion: '1.16.0'
         force: true
 
+# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- develop
+
+resources:
+- repo: self
+
+variables:
+  dockerRegistryServiceConnection: 'your-service-connection-name'
+  # ... (your other variable definitions)
+
+stages:
 - stage: Build
   displayName: Build stage
   jobs:
@@ -39,6 +53,5 @@ stages:
         containerRegistry: $(dockerRegistryServiceConnection)
         tags: |
           $(tag)
-
 
 
