@@ -34,16 +34,6 @@ stages:
     Dockerfile: '**/Dockerfile'
     tags: '$(tag)'
     steps:
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
-
     - upload: manifests
       artifact: manifests
 
