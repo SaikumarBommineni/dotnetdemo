@@ -71,6 +71,30 @@ stages:
           - task: KubernetesManifest@0
             displayName: Deploy to Kubernetes cluster
             inputs:
+          - task: KubernetesManifest@0
+            inputs:
+              action: 'deploy'
+              kubernetesServiceConnection: 'admin-saikumar'
+              namespace: 'azureadmin'
+              manifests: |
+                $(Pipeline.Workspace)/manifests/deployment.yml
+                $(Pipeline.Workspace)/manifests/service.yml
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(tag)
+                
+                - task: HelmDeploy@0
+                  inputs:
+                    connectionType: 'Azure Resource Manager'
+                    azureSubscription: 'Azure subscription 1(b3672f4b-0a7d-410e-956e-8111c247d206)'
+                    azureResourceGroup: 'admin'
+                    kubernetesCluster: 'admin'
+                    namespace: 'azureadmin'
+                    command: 'upgrade'
+                    chartType: 'FilePath'
+                    chartPath: 'helm-repo'
+                    valueFile: 'value.yaml'
+              imagePullSecrets: '$(imagePullSecret)'
+              rolloutStatusTimeout: '120'
               action: 'deploy'
               kubernetesServiceConnection: 'admin-saikumar'
               namespace: 'azureadmin'
