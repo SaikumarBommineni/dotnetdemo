@@ -19,7 +19,7 @@ variables:
   imagePullSecret: 'cortlandcontainer1357fc49-auth'
 
   # Agent VM image name
-  vmImageName: 'kumar'
+  vmImageName: 'sai'
 
 
 stages:
