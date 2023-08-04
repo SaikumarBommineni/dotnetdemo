@@ -21,7 +21,6 @@ variables:
   # Agent VM image name
   vmImageName: 'kumar'
 
-
 stages:
 - stage: Build
   displayName: Build stage
