@@ -1,9 +1,11 @@
+# azure-pipeline.yaml
+
 # Deploy to Azure Kubernetes Service
 # Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 trigger:
-- develop
+- main
 
 resources:
 - repo: self
@@ -11,16 +13,15 @@ resources:
 variables:
 
   # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: 'c6a21a3a-008e-449d-8bd4-23569a974681'
-  imageRepository: 'saikumarbomminenidotnetdemo'
-  containerRegistry: 'cortlandcontainer.azurecr.io'
+  dockerRegistryServiceConnection: '35c6e5bd-b481-491b-82a2-d9aada27d2ea'
+  imageRepository: 'dotnet'
+  containerRegistry: 'myregistry00.azurecr.io'
   dockerfilePath: '**/Dockerfile'
   tag: '$(Build.BuildId)'
-  imagePullSecret: 'cortlandcontainer1357fc49-auth'
+  imagePullSecret: 'myregistry00d174-auth'
 
   # Agent VM image name
   vmImageName: 'kumar'
-
 
 stages:
 - stage: Build
@@ -29,7 +30,7 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      name: $(vmImageName)
+      vmImage: $(vmImageName)
     steps:
     - task: Docker@2
       displayName: Build and push an image to container registry
@@ -44,16 +45,15 @@ stages:
     - upload: manifests
       artifact: manifests
 
-- stage: Deploy
-  displayName: Deploy stage
+- stage: DeployToDev
+  displayName: Deploy to Dev 
   dependsOn: Build
-
   jobs:
-  - deployment: Deploy
-    displayName: Deploy
+  - deployment: DeployToDev
+    displayName: Deploy to Dev
     pool:
-      name: $(vmImageName)
-    environment: 'SaikumarBomminenidotnetdemo-1933.saikumar'
+      vmImage: $(vmImageName)
+    environment: 'dev'
     strategy:
       runOnce:
         deploy:
@@ -62,58 +62,60 @@ stages:
             displayName: Create imagePullSecret
             inputs:
               action: 'createSecret'
-              kubernetesServiceConnection: 'SaikumarBomminenidotnetdemo-1933-admin-calico-system-1690990366088'
-              namespace: 'azureadmin'
+              kubernetesServiceConnection: 'mycluster-bermtec'
+              namespace: 'bermtec'
               secretType: 'dockerRegistry'
               secretName: '$(imagePullSecret)'
               dockerRegistryEndpoint: '$(dockerRegistryServiceConnection)'
 
           - task: KubernetesManifest@0
-            displayName: Deploy to Kubernetes cluster
-            inputs:
-          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes cluster (Dev)
             inputs:
               action: 'deploy'
-              kubernetesServiceConnection: 'admin-saikumar'
-              namespace: 'azureadmin'
+              kubernetesServiceConnection: 'mycluster-bermtec'
+              namespace: 'bermtec'
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
                 $(Pipeline.Workspace)/manifests/service.yml
-              containers: |
-                $(containerRegistry)/$(imageRepository):$(tag)
-                
-                - task: HelmDeploy@0
-                  inputs:
-                    connectionType: 'Azure Resource Manager'
-                    azureSubscription: 'Azure subscription 1(b3672f4b-0a7d-410e-956e-8111c247d206)'
-                    azureResourceGroup: 'admin'
-                    kubernetesCluster: 'admin'
-                    namespace: 'azureadmin'
-                    command: 'upgrade'
-                    chartType: 'FilePath'
-                    chartPath: 'helm-repo'
-                    valueFile: 'value.yaml'
+              containers: '$(containerRegistry)/$(imageRepository):$(tag)'
               imagePullSecrets: '$(imagePullSecret)'
               rolloutStatusTimeout: '120'
+
+- stage: DeployToProd
+  displayName: Deploy to Production stage
+  dependsOn: DeployToDev
+  jobs:
+  - deployment: DeployToDev
+    displayName: Deploy to Production
+    pool:
+      vmImage: $(vmImageName)
+    environment: 'prod'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: KubernetesManifest@0
+            displayName: Create imagePullSecret
+            inputs:
+              action: 'createSecret'
+              kubernetesServiceConnection: 'mycluster-bermtec'
+              namespace: 'bermtec'
+              secretType: 'dockerRegistry'
+              secretName: '$(imagePullSecret)'
+              dockerRegistryEndpoint: '$(dockerRegistryServiceConnection)'
+
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes cluster (Prod)
+            inputs:
               action: 'deploy'
-              kubernetesServiceConnection: 'admin-saikumar'
-              namespace: 'azureadmin'
+              kubernetesServiceConnection: 'mycluster-bermtec'
+              namespace: 'bermtec'
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
                 $(Pipeline.Workspace)/manifests/service.yml
-              containers: |
-                $(containerRegistry)/$(imageRepository):$(tag)
-                
-                - task: HelmDeploy@0
-                  inputs:
-                    connectionType: 'Azure Resource Manager'
-                    azureSubscription: 'Azure subscription 1(b3672f4b-0a7d-410e-956e-8111c247d206)'
-                    azureResourceGroup: 'admin'
-                    kubernetesCluster: 'admin'
-                    namespace: 'azureadmin'
-                    command: 'upgrade'
-                    chartType: 'FilePath'
-                    chartPath: 'helm-repo'
-                    valueFile: 'value.yaml'
+              containers: '$(containerRegistry)/$(imageRepository):$(tag)'
               imagePullSecrets: '$(imagePullSecret)'
+              rolloutStatusTimeout: '120'
+
+
 
