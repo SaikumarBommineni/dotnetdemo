@@ -26,7 +26,7 @@ stages:
     displayName: Build
     pool:
       name: 'sai'
-- task: Docker@2
+-  task: Docker@2
   inputs:
     containerRegistry: '$(dockerRegistryServiceConnection)'
     repository: '$(imageRepository)'
