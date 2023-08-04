@@ -84,7 +84,7 @@ stages:
                     kubernetesCluster: 'admin'
                     namespace: 'azureadmin'
                     command: 'upgrade'
-                    chartType: 'FilePath'
+                    chartType: 'Name'
                     chartPath: 'helm-repo'
                     valueFile: 'values.yaml'
                 
