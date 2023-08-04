@@ -1,19 +1,3 @@
-# Deploy to Azure Kubernetes Service
-- task: HelmDeploy@0
-  inputs:
-    connectionType: 'Azure Resource Manager'
-    azureSubscription: 'Azure subscription 1(b3672f4b-0a7d-410e-956e-8111c247d206)'
-    azureResourceGroup: 'admin'
-    kubernetesCluster: 'admin'
-    namespace: 'saikumar'
-    command: 'upgrade'
-    chartType: 'Name'
-    chartName: 'charts'
-    chartVersion: '1.16.0'
-    valueFile: 'values.yaml'
-# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
-
 trigger:
 - develop
 
@@ -30,9 +14,9 @@ variables:
   tag: '$(Build.BuildId)'
   imagePullSecret: 'cortlandcontainer61943123-auth'
 
-  # Agent VM image name
-  vmImageName: 'ubuntu-latest'
-
+# Agent VM image name
+pool:
+  name: 'sai'
 
 stages:
 - stage: Build
@@ -41,7 +25,14 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      vmImage: $(vmImageName)
+      name: 'sai'
+- task: Docker@2
+  inputs:
+    containerRegistry: '$(dockerRegistryServiceConnection)'
+    repository: '$(imageRepository)'
+    command: 'buildAndPush'
+    Dockerfile: '**/Dockerfile'
+    tags: '$(tag)'
     steps:
     - task: Docker@2
       displayName: Build and push an image to container registry
@@ -57,15 +48,15 @@ stages:
       artifact: manifests
 
 - stage: Deploy
-  displayName: Deploy stage
+  displayName: Deploy 
   dependsOn: Build
 
   jobs:
   - deployment: Deploy
     displayName: Deploy
     pool:
-      vmImage: $(vmImageName)
-    environment: 'SaikumarBomminenidotnetdemo-1907.saikumar'
+      name: 'sai'
+    environment: 'stage'
     strategy:
       runOnce:
         deploy:
@@ -73,9 +64,12 @@ stages:
           - task: KubernetesManifest@0
             displayName: Create imagePullSecret
             inputs:
-              action: createSecret
-              secretName: $(imagePullSecret)
-              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+              action: 'createSecret'
+              kubernetesServiceConnection: 'admin-saikumar'
+              namespace: 'saikumar'
+              secretType: 'dockerRegistry'
+              secretName: '$(imagePullSecret)'
+              dockerRegistryEndpoint: '$(dockerRegistryServiceConnection)'
 
          - task: HelmDeploy@0
            inputs:
@@ -89,3 +83,4 @@ stages:
              chartName: 'heml.reo'
              chartVersion: '1.16.0'
              valueFile: 'values.yaml'
+             waitForExecution: false
