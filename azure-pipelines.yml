@@ -34,22 +34,20 @@ resources:
 variables:
   # ... (your variable definitions)
 
-stages:
-- stage: Build
-  displayName: Build stage
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      name: $(vmImageName)
-    steps:
-    - task: Docker@2
-      displayName: Build and push an image to the container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
+jobs:
+- job: Build
+  displayName: Build
+  pool:
+    name: $(vmImageName)
+  steps:
+  - task: Docker@2
+    displayName: Build and push an image to the container registry
+    inputs:
+      command: buildAndPush
+      repository: $(imageRepository)
+      dockerfile: $(dockerfilePath)
+      containerRegistry: $(dockerRegistryServiceConnection)
+      tags: |
+        $(tag)
+
 
