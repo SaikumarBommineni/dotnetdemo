@@ -30,7 +30,7 @@ stages:
   - job: Build
     displayName: Build
     pool:
-      vmImage: $(vmImageName)
+      name: $(vmImageName)
     steps:
     - task: Docker@2
       displayName: Build and push an image to container registry
@@ -116,6 +116,17 @@ stages:
               containers: '$(containerRegistry)/$(imageRepository):$(tag)'
               imagePullSecrets: '$(imagePullSecret)'
               rolloutStatusTimeout: '120'
+              - task: HelmDeploy@0
+                inputs:
+                  connectionType: 'Azure Resource Manager'
+                  azureSubscription: 'Azure subscription 1(b3672f4b-0a7d-410e-956e-8111c247d206)'
+                  azureResourceGroup: 'admin'
+                  kubernetesCluster: 'admin'
+                  namespace: 'azureadmin'
+                  command: 'upgrade'
+                  chartType: 'Name'
+                  chartName: 'helm-repo'
+                  valueFile: 'helm-repo'
 
 
 
