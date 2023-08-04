@@ -22,6 +22,17 @@ stages:
         chartVersion: '1.16.0'
         force: true
 
+trigger:
+- develop
+
+resources:
+- repo: self
+
+variables:
+  dockerRegistryServiceConnection: 'your-service-connection-name'
+  # ... (your other variable definitions)
+
+jobs:
 - job: Build
   displayName: Build
   pool:
