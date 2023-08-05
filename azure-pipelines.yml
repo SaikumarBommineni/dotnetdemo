@@ -1,89 +1,41 @@
-# Deploy to Azure Kubernetes Service
-# Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
-# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+provider "azurerm" {
+  features {}
+}
 
-trigger:
-- develop
+resource "azurerm_resource_group" "aks_rg" {
+  name     = "AzureResource3"
+  location = "South Central US"
+}
 
-resources:
-- repo: self
+resource "azurerm_kubernetes_cluster" "aks_cluster" {
+  name                = "cortlandcluster"
+  location            = azurerm_resource_group.aks_rg.location
+  resource_group_name = azurerm_resource_group.aks_rg.name
+  dns_prefix          = "myaks"
 
-variables:
+  default_node_pool {
+    name       = "default"
+    node_count = 2
+    vm_size    = "Standard_B2ms"
+  }
+  service_principal {
+    client_id     = "4b0b823c-4051-4dd1-833f-81b3d5c5b1b2"
+    client_secret = "Qxi8Q~7i5yiD-Oxph3c1_P49vBxqy4KaHTkmDazJ"
+  }
 
-  # Container registry service connection established during pipeline creation
-  dockerRegistryServiceConnection: 'da1b394b-46c8-4303-9864-f39943042589'
-  imageRepository: 'saikumarbomminenidotnetdemo'
-  containerRegistry: 'cortlandcontainer.azurecr.io'
-  dockerfilePath: '**/Dockerfile'
-  tag: '$(Build.BuildId)'
-  imagePullSecret: 'cortlandcontainer713627a2-auth'
+  tags = {
+    environment = "development"
+  }
+}
 
-  # Agent VM image name
-  vmImageName: 'kumar'
+resource "azurerm_storage_account" "storage_account" {
+  name                     = "myself"
+  resource_group_name      = azurerm_resource_group.aks_rg.name
+  location                 = azurerm_resource_group.aks_rg.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
 
-
-stages:
-- stage: Build
-  displayName: Build stage
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      name: $(vmImageName)
-    steps:
-    - task: Docker@2
-      displayName: Build and push an image to container registry
-      inputs:
-        command: buildAndPush
-        repository: $(imageRepository)
-        dockerfile: $(dockerfilePath)
-        containerRegistry: $(dockerRegistryServiceConnection)
-        tags: |
-          $(tag)
-
-    - upload: manifests
-      artifact: manifests
-
-- stage: Deploy
-  displayName: Deploy stage
-  dependsOn: Build
-
-  jobs:
-  - deployment: Deploy
-    displayName: Deploy
-    pool:
-      name: $(vmImageName)
-    environment: 'SaikumarBomminenidotnetdemo-1708.saikumar'
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: KubernetesManifest@0
-            displayName: Create imagePullSecret
-            inputs:
-              action: createSecret
-              secretName: $(imagePullSecret)
-              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
-
-          - task: KubernetesManifest@0
-            displayName: Deploy to Kubernetes cluster
-            inputs:
-              action: deploy
-              manifests: |
-                $(Pipeline.Workspace)/manifests/deployment.yml
-                $(Pipeline.Workspace)/manifests/service.yml
-              imagePullSecrets: |
-                $(imagePullSecret)
-              containers: |
-                $(containerRegistry)/$(imageRepository):$(tag)
-                - task: HelmDeploy@0
-                  inputs:
-                    connectionType: 'Azure Resource Manager'
-                    azureSubscription: 'Azure subscription 1(b3672f4b-0a7d-410e-956e-8111c247d206)'
-                    azureResourceGroup: 'admin'
-                    kubernetesCluster: 'admin'
-                    namespace: 'azureadmin'
-                    command: 'upgrade'
-                    chartType: 'FilePath'
-                    chartPath: 'helm-repo'
-                    valueFile: 'helm-repo'
+  tags = {
+    environment = "development"
+  }
+}
