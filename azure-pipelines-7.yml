@@ -62,7 +62,7 @@ stages:
             displayName: Create imagePullSecret
             inputs:
               action: 'createSecret'
-              kubernetesServiceConnection: 'admin-azureadmin'
+              kubernetesServiceConnection: 'saiaks-test'
               namespace: 'test'
               secretType: 'dockerRegistry'
               secretName: '$(imagePullSecret)'
@@ -72,7 +72,7 @@ stages:
             displayName: Deploy to Kubernetes cluster
             inputs:
               action: 'deploy'
-              kubernetesServiceConnection: 'admin-azureadmin'
+              kubernetesServiceConnection: 'saiaks-test'
               namespace: 'test'
               manifests: |
                 $(Pipeline.Workspace)/manifests/deployment.yml
